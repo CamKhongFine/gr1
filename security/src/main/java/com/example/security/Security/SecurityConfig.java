@@ -6,12 +6,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -41,7 +38,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsManager userDetailsManager(DataSource datasource) {
-        try(Connection connection = datasource.getConnection()){
+        try (Connection connection = datasource.getConnection()) {
             System.out.println("Connect Successfully");
         } catch (SQLException e) {
             e.printStackTrace();
@@ -60,17 +57,19 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests (configurer ->
-                configurer
-                        .requestMatchers(HttpMethod.GET, "/**").hasRole("ADMIN")
-        );
+        http
+                .authorizeHttpRequests(configurer ->
+                        configurer
+                                .requestMatchers(HttpMethod.GET, "/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                                .anyRequest().authenticated()
+                );
 
         // use HTTP Basic authentication
         http.httpBasic(Customizer.withDefaults());
 
         // disable Cross Site Request Forgery (CSRF)
         //In general .not required for stateless REST APIs that use POST, PUT, Delete and /or PATCH
-        http.csrf(csrf -> csrf.disable());
+        http.csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 
