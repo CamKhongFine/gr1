@@ -31,7 +31,7 @@ public class JwtGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtGat
                 token = token.substring(7);
                 try {
                     Claims claims = Jwts.parser()
-                            .verifyWith(getSignInKey())
+                            .verifyWith(getSigninKey())
                             .build()
                             .parseSignedClaims(token)
                             .getPayload();
@@ -40,7 +40,7 @@ public class JwtGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtGat
                     System.out.println(!role.equals("ROLE_ADMIN"));
                     if(!role.equals("ROLE_ADMIN") || claims.getExpiration().before(new Date(System.currentTimeMillis()))) {
                         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        return chain.filter(exchange);
+                        return exchange.getResponse().setComplete();
                     }
                     exchange.getAttributes().put("claims", claims);
                     return chain.filter(exchange);
@@ -55,7 +55,7 @@ public class JwtGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtGat
         };
     }
 
-    private SecretKey getSignInKey() {
+    private SecretKey getSigninKey() {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
